@@ -1,0 +1,144 @@
+import sys
+import math
+import pygame
+
+pygame.init()
+
+#this set the size of the display and labels the game window
+
+display = pygame.display.set_mode((1000, 563))
+pygame.display.set_caption("Rat Attack!")
+clock = pygame.time.Clock()
+
+ScreenWidth = 1000
+ScreenHeight = 563
+
+#this loades the images for the grohnd and background
+
+groundImage = pygame.image.load("ground.png").convert_alpha()
+Gwidth = groundImage.get_width()
+Gheight = groundImage.get_height()
+
+bgroungImages = []
+for i in range(1,6):
+    bgroungImage = pygame.image.load(f"bgimg-{i}.png").convert_alpha()
+    bgroungImages.append(bgroungImage)
+bgroundWidth = bgroungImages[0].get_width()
+
+#this moves the different layers of the background at different speeds to have a paralax effect
+
+def draw_BackGround():
+    for x in range (5):
+        speed = 0.6
+        for i in bgroungImages:
+            display.blit(i, (x * bgroundWidth - scroll * speed, 0))
+            speed += 0.2
+
+def draw_ground():
+    for x in range(20):
+        display.blit(groundImage, ((x * Gwidth) - scroll * 2,ScreenHeight - Gheight ))
+
+#class Gamestate:
+ #   def __init__(self,)
+
+#player class
+
+class Player:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.rect = pygame.Rect((x,y, 80 , 180))
+        self.vel_y = 0
+    def draw(self,surface):
+        pygame.draw.rect(surface, (255,0,0), self.rect)
+
+
+#class for making the bullets and calculating their speed and direction
+
+class PlayerBullet:
+    def __init__(self, x, y, mouse_x, mouse_y):
+        self.x = x
+        self.y = y
+        self.mouse_x = mouse_x
+        self.mouse_y = mouse_y
+        self.speed = 20
+        self.angle = math.atan2(y-mouse_y, x-mouse_x)
+        self.x_velocity = math.cos(self.angle) * self.speed
+        self.y_velocity = math.sin(self.angle) * self.speed
+    def main(self, display):
+        self.x -= int(self.x_velocity)
+        self.y -= int(self.y_velocity)
+
+        pygame.draw.circle(display, (20,20,20), (self.x, self.y), 5 )
+
+player_bullets = []
+
+scroll = 0
+
+keys = pygame.key.get_pressed()
+
+player1 = Player(200,310)
+
+
+'''while True:
+
+    display.fill((0,0,0))
+    draw_text('main menu', font, (255, 255, 255), display, 20, 20)
+    mx, my = pygame.mouse.get_pos()
+    button_1 = pygame.Rect(50, 100, 200, 50)
+    button_2 = pygame.Rect(50, 200, 200, 50)
+    if button_1.collidepoint((mx, my)):
+        if click:
+            game()
+    if button_2.collidepoint((mx, my)):
+        if click:
+            options()
+    pygame.draw.rect(display, (255, 0, 0), button_1)
+    pygame.draw.rect(display, (255, 0, 0), button_2)
+    click = False
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                sys.exit()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                click = True
+
+    pygame.display.update()
+    clock.tick(60)
+
+    def draw_text(text, font, colour, surface,x,y):
+        textobj = font.render(text, 1, colour)
+        textrect = textobj.get_rect()
+        textrect.topleft = (x,y)
+        display.blit(textobj, textrect)
+    font = pygame.font.SysFont(None, 20)'''
+
+playing = True
+while playing:
+
+    clock.tick(60)
+
+    draw_BackGround()
+    draw_ground()
+    player1.draw(display)
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_a] and scroll > 0:
+        scroll -= 3
+        if keys[pygame.K_d] and scroll < 300:
+            scroll += 3
+    #if keys[pygame.K_w]:B
+
+    for event in pygame.event.get():
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                player_bullets.append(PlayerBullet(player1.x, player1.y, mouse_x, mouse_y))
+                for bullet in player_bullets:
+                    bullet.main(display)
+    pygame.display.update()
