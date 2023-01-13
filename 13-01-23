@@ -1,0 +1,200 @@
+import sys
+import math
+import pygame
+
+
+pygame.init()
+pygame.key.set_repeat(5,10)
+
+ScreenWidth = 1000
+ScreenHeight = 563
+display = pygame.display.set_mode((ScreenWidth, ScreenHeight))
+pygame.display.set_caption("Rat Attack!")
+clock = pygame.time.Clock()
+
+left = False
+right = False
+
+class Player:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.rect = pygame.Rect((x,y, 80 , 180))
+        self.vel_y = 0
+        self.isJump = False
+        self.jumpCount = 10
+    def playerwalk(self):
+        if left == True:
+            Ltemp = pygame.image.load('CharLeft.png').convert_alpha()
+            LeftSprite = pygame.transform.scale(Ltemp, (120,200))
+            display.blit(LeftSprite,(200,300))
+        elif right == True:
+            Rtemp = pygame.image.load('CharWalk-2.png').convert_alpha()
+            RightSprite = pygame.transform.scale(Rtemp, (120,200))
+            display.blit(RightSprite,(200,300))
+        else:
+            standingtemp = pygame.image.load('CharWalk-1.png').convert_alpha()
+            standing = pygame.transform.scale(standingtemp, (120,200))
+            display.blit(standing,(200,300 ))
+
+class PlayerBullet:
+    def __init__(self, x, y, mouse_x, mouse_y):
+        self.x = x 
+        self.y = y
+        self.mouse_x = mouse_x
+        self.mouse_y = mouse_y
+        self.speed = 10
+        self.angle = math.atan2(y-mouse_y, x-mouse_x)
+        self.x_velocity = math.cos(self.angle) * self.speed
+        self.y_velocity = math.sin(self.angle) * self.speed
+    def main(self, display):
+        self.x -= int(self.x_velocity)
+        self.y -= int(self.y_velocity)
+        pygame.draw.circle(display, (20,20,20), (self.x , self.y), 5 )
+
+def text(text, font):
+    textSurface = font.render(text, True, (0,0,0))
+    return textSurface, textSurface.get_rect()
+
+
+def button(ButtonText,x,y,width,height,idlec,activec,action=None):
+    global menu
+    mouse = pygame.mouse.get_pos()
+    click = pygame.mouse.get_pressed()
+    if x+width > mouse[0] > x and y+height > mouse[1] > y:
+        pygame.draw.rect(display, activec,(x,y,width,height))
+        if click[0] == 1 and action != None:
+            if action == 'play' or 'start':
+                gameloop()
+                pause = False
+                menu = False
+            elif action == 'quit':
+                pygame.quit()
+                sys.exit()    
+    else:
+        pygame.draw.rect(display, idlec,(x,y,width,height))
+
+    smallText = pygame.font.Font("freesansbold.ttf",20)
+    textSurf, textRect = text(ButtonText, smallText)
+    textRect.center = ( (x+(width/2)), (y+(height/2)) )
+    display.blit(textSurf, textRect)
+
+menu = True
+
+def MainMenu():
+    while menu:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()   
+        display.fill((255,255,0))  
+        largeText = pygame.font.SysFont("calibri",115)
+        TextSurf, TextRect = text("Rat Attack!", largeText)
+        TextRect.center = ((ScreenWidth/2),(ScreenHeight/2))
+        display.blit(TextSurf, TextRect)
+        button("Lets Go!",200,450,200,100,(0,255,0),(0,200,0),'Start')
+        button("Quit",600,450,200,100,(255,0,0),(200,0,0),'quit')
+        pygame.display.update()
+        clock.tick(60) 
+
+
+
+def paused():
+    while pause:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()   
+            display.fill((255,255,255))  
+            largeText = pygame.font.SysFont("calibri",115)
+            TextSurf, TextRect = text("Paused", largeText)
+            TextRect.center = ((ScreenWidth/2),(ScreenHeight/2))
+            display.blit(TextSurf, TextRect)
+            button("Continue",200,450,200,100,(0,255,0),(0,200,0),'play')
+            button("Quit",600,450,200,100,(255,0,0),(200,0,0),'quit')
+            pygame.display.update()
+            clock.tick(60)  
+
+player_bullets = []
+ammo = 6
+scroll = 0
+
+keys = pygame.key.get_pressed()
+player1 = Player(200,310)
+
+groundImage = pygame.image.load("ground.png").convert_alpha()
+Gwidth = groundImage.get_width()
+Gheight = groundImage.get_height()
+
+bgroungImages = []
+for i in range(1,6):
+    bgroungImage = pygame.image.load(f"bgimg-{i}.png").convert_alpha()
+    bgroungImages.append(bgroungImage)
+bgroundWidth = bgroungImages[0].get_width()
+
+def draw_BackGround():
+    for x in range (5):
+        speed = 0.6
+        for i in bgroungImages:
+            display.blit(i, (x * bgroundWidth - scroll * speed, 0))
+            speed += 0.2
+
+def draw_ground():
+    for x in range(20):
+        display.blit(groundImage, ((x * Gwidth) - scroll * 2,ScreenHeight - Gheight ))
+
+
+def gameloop():
+    global pause
+    pause = False
+    global scroll
+    clock.tick(60)
+    draw_BackGround()
+    draw_ground()
+    player1.playerwalk()
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_a and scroll > 0:
+                scroll -= 3
+                right= False
+                left = True
+            if event.key == pygame.K_d and scroll < 3000:
+                scroll += 3
+                left = False
+                right = True
+ 
+
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                pause = True
+                paused()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                if ammo-len(player_bullets) >=1:
+                    player_bullets.append(PlayerBullet(player1.x, player1.y, mouse_x, mouse_y))
+
+    for bullet in player_bullets:
+        if bullet.x >= 1000 or bullet.y >= 563:
+            player_bullets.remove(bullet)
+        if bullet.x <= 0 or bullet.y <= 0:
+            player_bullets.remove(bullet)
+        bullet.main(display)
+    print(len(player_bullets) , int(ammo)) 
+    #print(mouse_x,mouse_y)
+
+
+
+    
+    pygame.display.update()
+
+playing = True
+while playing:
+    if menu == True:
+        MainMenu()
+    else:
+        gameloop()
